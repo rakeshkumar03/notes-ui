@@ -3,63 +3,70 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 
-export default function App() {
-  const [notes, setNotes]     = useState([]);
-  const [title, setTitle]     = useState('');
-  const [content, setContent] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState('');
+// Create an Axios instance that targets your Railway backend in production
+const API = axios.create({
+  baseURL: process.env.REACT_APP_API_URL || '/', // '/' hits CRA proxy in development
+});
 
-  // Load notes on mount
+function App() {
+  const [notes, setNotes]       = useState([]);
+  const [title, setTitle]       = useState('');
+  const [content, setContent]   = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
+
+  // Load all notes on mount
   useEffect(() => {
     fetchNotes();
   }, []);
 
-  async function fetchNotes() {
+  const fetchNotes = async () => {
     setLoading(true);
     try {
-      const res = await axios.get('/notes');
+      const res = await API.get('/notes');
       setNotes(res.data);
       setError('');
     } catch (err) {
-      console.error('Fetch notes error:', err);
+      console.error('Failed to fetch notes:', err);
       setError('Could not load notes.');
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  // Add a new note
-  async function handleAdd(e) {
+  // Handle adding a new note
+  const handleAdd = async e => {
     e.preventDefault();
     if (!title.trim() || !content.trim()) return;
+
     try {
-      const res = await axios.post('/notes', { title, content });
+      const res = await API.post('/notes', { title: title.trim(), content: content.trim() });
+      // Prepend new note to list
       setNotes([res.data, ...notes]);
       setTitle('');
       setContent('');
       setError('');
     } catch (err) {
-      console.error('Add note error:', err);
+      console.error('Failed to add note:', err);
       setError(err.response?.data?.error || 'Add note failed');
     }
-  }
+  };
 
-  // Delete a note
-  async function handleDelete(id) {
+  // Handle deleting a note
+  const handleDelete = async id => {
     try {
-      await axios.delete(`/notes/${id}`);
+      await API.delete(`/notes/${id}`);
       setNotes(notes.filter(n => n.id !== id));
       setError('');
     } catch (err) {
-      console.error('Delete note error:', err);
+      console.error('Failed to delete note:', err);
       setError('Delete note failed');
     }
-  }
+  };
 
   return (
     <div className="app-container">
-      <h1>Notes app</h1>
+      <h1>Full-Stack Notes</h1>
 
       {error && <div className="error-banner">{error}</div>}
 
@@ -79,7 +86,7 @@ export default function App() {
       </form>
 
       {loading ? (
-        <p>Loading notes...</p>
+        <p>Loading notes…</p>
       ) : (
         <div className="notes-list">
           {notes.map(note => (
@@ -94,3 +101,5 @@ export default function App() {
     </div>
   );
 }
+
+export default App;
