@@ -66,7 +66,7 @@ function App() {
 
   return (
     <div className="app-container">
-      <h1>Full-Stack Notes</h1>
+      <h1>Notes app</h1>
 
       {error && <div className="error-banner">{error}</div>}
 
